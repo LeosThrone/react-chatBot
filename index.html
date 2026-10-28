@@ -16,12 +16,20 @@
         function ChatInput({ messages, setMessages }){
 
             const [inputText,setInputText] = React.useState('');
+            const[loading,setLoading] = React.useState(false);
 
             function storgeInput(event){
                 setInputText(event.target.value);
             }
 
-            function sendMessage(){
+            async function sendMessage(){
+
+                if(loading || inputText === ''){
+                    return;
+                }
+
+                setLoading(true);
+                setInputText('');
 
                 const newMessages = [...messages,{
                         message: inputText,
@@ -29,9 +37,16 @@
                         id: crypto.randomUUID()
                     }];
 
-                setMessages(newMessages);
+                setMessages(
+                    [...newMessages,{
+                        message: 'Loading...',
+                        sender:'robot',
+                        id: crypto.randomUUID()
+                    }]
+                )
+                
 
-                const response = Chatbot.getResponse(inputText);
+                const response = await (Chatbot.getResponseAsync(inputText));
 
                 setMessages(
                     [...newMessages,{
@@ -42,7 +57,18 @@
                 )
 
 
-                setInputText('');
+                
+                setLoading(false);
+            }
+
+            function keyDown(event){
+                if(event.key === "Enter"){
+                    sendMessage();
+                }
+
+                if(event.key === 'Esc' || event.key === 'Escape'){
+                    setInputText('');
+                }
             }
 
             return (
@@ -52,6 +78,7 @@
                         placeholder="Send a message to Chatbot"
                         onChange={storgeInput}
                         value={inputText}
+                        onKeyDown={keyDown}
                     />
                     <button onClick={sendMessage}>Send</button>
                 </>
